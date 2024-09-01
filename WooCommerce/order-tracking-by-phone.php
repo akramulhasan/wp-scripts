@@ -1,4 +1,15 @@
 <?php
+
+/****
+ ** By default the WC Tracking Form only allow to track down the order details by  email only. But this custom tracking form will allow user to track down either Phone or Email
+
+ ** This code need to be placed on functions.php file
+ ** To show the form use the shortcode [custom_order_tracking_form]
+ **/
+
+
+
+
 // ****
 // * Custom Tracking BY PHONE or EMAIL
 // ****
