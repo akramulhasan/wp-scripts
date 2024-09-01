@@ -50,9 +50,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
+Your Name - [@websaitar](https://twitter.com/your_twitter) - dev.akramul@gmail.com
 
-Project Link: [https://github.com/your_username/wp-scripts](https://github.com/your_username/wp-scripts)
+Project Link: [https://github.com/akramulhasan/wp-scripts](https://github.com/akramulhasan)
 
 ## 🙏 Acknowledgements
 
