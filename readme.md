@@ -50,7 +50,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-Your Name - [@websaitar](https://twitter.com/your_twitter) - dev.akramul@gmail.com
+Your Name - [@websaitar](https://twitter.com/websaitar) - dev.akramul@gmail.com
 
 Project Link: [https://github.com/akramulhasan/wp-scripts](https://github.com/akramulhasan)
 
