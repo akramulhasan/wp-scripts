@@ -1,80 +1,117 @@
 <?php
 
-/****
- ** This code will create a custom registraton form shortcode which will allow user to get registrered with phone number or email
- ** This code need to be placed on theme's functions.php file
- ** Here is the shortcode -> [custom_woocommerce_registration_form]
- **/
+/**
+ * Divi Contact Form - Date & Time Field Fix
+ *
+ * This snippet converts normal Divi Contact Form text input fields into native
+ * browser Date and Time fields.
+ *
+ * Why this is needed:
+ * Divi Contact Form does not provide native date/time field types. This code lets
+ * you create two normal input fields in the Divi Contact Form module and converts
+ * them into date/time picker fields on the frontend.
+ *
+ * Where to place:
+ * - Theme/child theme functions.php file; or
+ * - Code Snippets / WPCode plugin as a PHP snippet.
+ *
+ * Divi Contact Form field IDs required:
+ * - appointment_date
+ * - appointment_time
+ *
+ * In Divi, create two normal Input Field fields:
+ * - Field ID: appointment_date
+ * - Field ID: appointment_time
+ *
+ * If you use different field IDs, update the values in the JavaScript selectors below.
+ */
 
-
-// Register the custom shortcode for WooCommerce registration form
-function custom_woocommerce_registration_form_shortcode()
-{
-    ob_start();
-?>
-    <form id="custom-register-form" method="post">
-        <p class="form-row form-row-wide">
-            <label for="reg_username"><?php _e('Username (Email or Phone)', 'woocommerce'); ?> <span class="required">*</span></label>
-            <input type="text" class="input-text" name="username" id="reg_username" value="<?php echo isset($_POST['username']) ? esc_attr($_POST['username']) : ''; ?>" required />
-        </p>
-
-        <p class="form-row form-row-wide">
-            <label for="reg_password"><?php _e('Password', 'woocommerce'); ?> <span class="required">*</span></label>
-            <input type="password" class="input-text" name="password" id="reg_password" required />
-            <span class="show-password-input"></span>
-        </p>
-
-        <p class="form-row">
-            <button type="submit" class="woocommerce-Button button" name="register" value="Register"><?php _e('Register', 'woocommerce'); ?></button>
-        </p>
-        <?php
-        // Display any registration errors
-        if (isset($GLOBALS['registration_errors']) && is_wp_error($GLOBALS['registration_errors'])) {
-            echo '<div class="woocommerce-error">' . $GLOBALS['registration_errors']->get_error_message() . '</div>';
-        }
-        ?>
-    </form>
-<?php
-    return ob_get_clean();
+if (! defined('ABSPATH')) {
+    exit;
 }
-add_shortcode('custom_woocommerce_registration_form', 'custom_woocommerce_registration_form_shortcode');
 
-// Handle form submission and registration
-function custom_handle_registration()
-{
-    if (isset($_POST['register'])) {
-        $username = sanitize_user($_POST['username']);
-        $password = sanitize_text_field($_POST['password']);
+/**
+ * Add frontend JavaScript to convert Divi text inputs into date/time fields.
+ */
 
-        if (empty($username) || empty($password)) {
-            $GLOBALS['registration_errors'] = new WP_Error();
-            if (empty($username)) {
-                $GLOBALS['registration_errors']->add('username_error', __('Username is required.', 'woocommerce'));
-            }
-            if (empty($password)) {
-                $GLOBALS['registration_errors']->add('password_error', __('Password is required.', 'woocommerce'));
-            }
-            return;
-        }
-
-        // Check if the username already exists
-        if (username_exists($username)) {
-            $GLOBALS['registration_errors'] = new WP_Error();
-            $GLOBALS['registration_errors']->add('username_exists', __('Username already exists.', 'woocommerce'));
-            return;
-        }
-
-        // Create the user
-        $user_id = wp_create_user($username, $password);
-
-        if (!is_wp_error($user_id)) {
-            // Log in the user
-            wp_set_auth_cookie($user_id);
-            wp_redirect(home_url() . '/my-account');
-            exit;
-        } else {
-            $GLOBALS['registration_errors'] = $user_id;
-        }
+add_action('wp_footer', function () {
+    if (is_admin()) {
+        return;
     }
-}
-add_action('wp', 'custom_handle_registration');
+?>
+    <script>
+        (function() {
+            const dateSelector = 'input[name^="et_pb_contact_appointment_date_"], input[id^="et_pb_contact_appointment_date_"]';
+            const timeSelector = 'input[name^="et_pb_contact_appointment_time_"], input[id^="et_pb_contact_appointment_time_"]';
+
+            function convertToDateTimeFields(context) {
+                context = context || document;
+
+                const dateFields = context.querySelectorAll(dateSelector);
+                const timeFields = context.querySelectorAll(timeSelector);
+
+                dateFields.forEach(function(field) {
+                    field.setAttribute('type', 'date');
+                    field.setAttribute('min', new Date().toISOString().split('T')[0]);
+                    field.setAttribute('autocomplete', 'off');
+                });
+
+                timeFields.forEach(function(field) {
+                    field.setAttribute('type', 'time');
+                    field.setAttribute('step', '900'); // 15-minute interval
+                    field.setAttribute('autocomplete', 'off');
+                });
+            }
+
+            function convertBackToTextFields(form) {
+                form.querySelectorAll(dateSelector).forEach(function(field) {
+                    field.setAttribute('type', 'text');
+                });
+
+                form.querySelectorAll(timeSelector).forEach(function(field) {
+                    field.setAttribute('type', 'text');
+                });
+            }
+
+            function initDiviDateTimeFix() {
+                convertToDateTimeFields(document);
+
+                document.querySelectorAll('.et_pb_contact_form').forEach(function(form) {
+                    if (form.dataset.diviDateTimeFixed === 'yes') {
+                        return;
+                    }
+
+                    form.dataset.diviDateTimeFixed = 'yes';
+
+                    // Native form submit fallback
+                    form.addEventListener('submit', function() {
+                        convertBackToTextFields(form);
+                    }, true);
+
+                    // Divi usually handles contact form submission via button click/AJAX
+                    const submitButtons = form.querySelectorAll(
+                        'button[type="submit"], input[type="submit"], .et_pb_contact_submit'
+                    );
+
+                    submitButtons.forEach(function(button) {
+                        ['mousedown', 'touchstart', 'click'].forEach(function(eventName) {
+                            button.addEventListener(eventName, function() {
+                                convertBackToTextFields(form);
+
+                                // If submission fails, restore date/time picker again
+                                setTimeout(function() {
+                                    convertToDateTimeFields(form);
+                                }, 3000);
+                            }, true);
+                        });
+                    });
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', initDiviDateTimeFix);
+            window.addEventListener('load', initDiviDateTimeFix);
+            setTimeout(initDiviDateTimeFix, 1000);
+        })();
+    </script>
+<?php
+});
